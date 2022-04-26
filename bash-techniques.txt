@@ -1,0 +1,311 @@
+# --------------------------
+# BASH 4
+# --------------------------
+# UPPERCASE
+coin=${coin^}  # first letters to uppercase
+coin=${coin^^} # all to uppercase
+declare -u coin
+
+
+# LOWERCASE
+coin=${coin,}  # first letter to lowercase
+coin=${coin,,} # all to lowercase
+declare -l coin #???
+
+# TOGGLE
+coin=${coin~}  
+coin=${coin~~}
+
+
+# CAPITALIZE
+declare -c coin
+
+# OTHER WAYS
+$ echo "$a" | tr '[:upper:]' '[:lower:]'
+$ echo "$a" | awk '{print tolower($0)}'
+$ echo "${a,,}" # to lower
+
+# --------------------------
+# Library starts
+# --------------------------
+# Logging
+
+# [I] for Information
+# [C] for executed Command
+# [O] for Output of the executed command
+# [E] for Error
+# [W] for Warning
+
+LOG_FILE="example.log"
+
+function log() {
+  local tag=''
+  local -r datetime=$(date +"%Y/%m/%d:%H:%M:%S %z")
+
+  # test for tag, shift or not
+  local -r tag_regex="^(I|C|O|E|W)$"
+  [[ "${1:-}" =~ $tag_regex ]] \
+    && { tag=${1:-}; shift; }
+
+  if [ $HIDE_LOG ]; then
+      echo -e "[${tag:-$DEFAULT_TAG}] $@" >> $LOG_FILE
+  else
+      echo "${datetime} [${tag:-$DEFALT_TAG}] $@" | tee -a $LOG_FILE
+  fi
+}
+log "[I] service start"
+log "[D] debug message"
+
+# another write to log file
+echo [I] $(date "+%HH%M"): "${@}" 2>&1 | tee -a ${fileLog:-/dev/null} >&2
+
+# --------------------------
+# command test
+function is_command () {
+    log "[I] check if commad $1 exists"
+    type "$1" &> /dev/null ;
+}
+
+CMD=zip
+
+if is_command ${CMD} ; then
+   log "[I] '${CMD}' command found"
+else
+   log "[E] '${CMD}' command not found"
+fi
+
+function is_command () {
+    log "[I] check if commad $1 exists"
+    type "$1" &> /dev/null ;
+}
+
+CMD=zip
+
+if is_command ${CMD} ; then
+   log "[I] '${CMD}' command found"
+else
+   log "[E] '${CMD}' command not found"
+
+# --------------------------
+# template prcessing
+function process_template() {
+    source $1 > $2
+
+    result=$?
+    if [ $result -ne 0 ]; then
+        log "[E] Error during template processing: '$1' > '$2'"
+    fi
+    return $result
+}
+
+VALUE1="tmpl-value-1"
+VALUE2="tmpl-value-2"
+VALUE3="tmpl-value-3"
+
+process_template template.tmpl template.result
+
+# --------------------------
+# lock file & temp file creation
+# Testing the lock file
+
+$ ./template.sh 2>&1 1>/dev/null & sleep 1 && ./template.sh
+
+# --------------------------
+# traps
+INT signal, which is usually sent by CTL+C
+TERM signal, which can be sent with kill -TERM -<script PID>
+
+trap 'error "${SCRIPT_NAME}: FATAL ERROR at $(date "+%HH%M") (${SECONDS}s): Interrupt signal intercepted! Exiting now..." 2>&1 | tee -a ${fileLog:-/dev/null} >&2 ; exit 99;' INT QUIT TERM
+trap 'cleanup' EXIT
+
+# --------------------------
+# Other Code
+# --------------------------
+# here string into read to desconstruct a line with separator
+IFS=':' read -r item_path item_type <<< "$(file /etc/hosts)"; echo $item_type; echo $item_path;
+ASCII text
+/etc/hosts
+
+# --------------------------
+# sort associative array by key
+mapfile -d '' keys < <(printf '%s\0' "${!__symbols[@]}" | sort -z)
+
+# --------------------------
+# append and increment variables
+# append array
+arr+=( ${var1} ${var2})
+
+# append string
+str+=${new_str}
+
+# post increment numeric
+(( i++ ))
+
+# pre increment numeric
+(( ++i ))
+
+# --------------------------
+# sort associative array by value
+for k in "${!authors[@]}"
+do
+    echo $k ' - ' ${authors["$k"]}
+done |
+sort -rn -k3
+
+# or
+#mapfile -d '' keys < <(printf '%s\0' "${__symbols[@]}" | sort -z)
+
+# --------------------------
+# daemonizing a scripts
+( "${@}" > /dev/null 2>&1 & )
+nohup "${@}" > /dev/null 2>&1 &
+"${@}" > /dev/null 2>&1 & disown
+
+# --------------------------
+# testing for executable in path
+require_curl() { which curl 2>&1 > /dev/null; }
+
+require_curl() {
+  which curl 2>&1 > /dev/null
+}
+
+# instead of
+require_curl() {
+  if which curl 2>&1 > /dev/null; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# --------------------------
+# DEBUG output
+if [[ $DEBUG ]]; then
+  echo ">>> $*"
+fi
+
+# for me
+(( DEBUG )) &&  echo ">>> $*"
+
+# --------------------------
+# TEMPLATES
+# templating with heredoc
+STATUS_URI="/hows-it-goin";  MONITOR_IP="10.10.2.15";
+
+cat >/etc/apache2/conf.d/mod_status.conf <<EOF
+<Location ${STATUS_URI}>
+    SetHandler server-status
+    Order deny,allow
+    Deny from all
+    Allow from ${MONITOR_IP}
+</Location>
+EOF
+
+# templating with regular expressions
+regex='\$\{([a-zA-Z_][a-zA-Z_0-9]*)\}'
+while read line; do
+    while [[ "$line" =~ $regex ]]; do
+        param="${BASH_REMATCH[1]}"
+        line=${line//${BASH_REMATCH[0]}/${!param}}
+    done
+    echo $line
+done
+
+# raw sed templating
+$ cat template.txt
+the number is ${i}
+the dog's name is ${name}
+
+$ cat replace.sed
+s/${i}/5/
+s/${name}/Fido/
+
+$ sed -f replace.sed template.txt > out.txt
+
+$ cat out.txt
+the number is 5
+the dog's name is Fido
+
+# -------------------------
+# code to file - round tripping
+#
+# put the variable data to file
+file=${1?}; shift
+declare -A row
+source -- "$file" || exit
+while [ "$#" -ge 2 ]; do
+  row[$1]=$2
+  shift 2
+done
+declare -p row > "$file"
+
+# read the variable data back in from file
+file=${1?}; shift
+declare -A row
+source -- "$file"
+for i in "${!row[@]}"
+do
+  echo "key  : $i"
+  echo "value: ${row[$i]}"
+done
+
+# --------------------------
+# --------------------------
+# BASH TEMPLATES
+# --------------------------
+# READING FILES line by line
+while read name; do
+  echo "${name"
+done < ${filename}
+
+# parse CSV file
+while read line; do
+  # parse this line into fields
+  # from herestring variable
+  IFS=',' read -r fld1 fld2 fld3 <<< "${line}"
+done < ${filename}
+
+
+
+# -------------------------
+# PRIVATE IP RANGES, BY CIDR BLOCK
+#   a base for more interest utilities
+# -------------------------
+# 192.168.0.0/16 (65,536 addresses)
+# 192.168.0.0 -> 192.168.255.255
+# into string list=$(echo 192.168.{0..255}.{0..255})
+local list=$(echo 192.168.{0..255}.{0..255})
+declare -a list=(192.168.{0..255}.{0..255})
+# number of ips
+echo "number of ips: ${#list[@]}"
+> 65536
+# 3 ips at 1000th pos
+echo "${list[@]:1000:3}
+> 192.168.3.232 192.168.3.233 192.168.3.234
+
+# other private IP CIDR blocks
+# 172.16.0.0/12 (1,048,576 addresses)
+# 172.16.0.0 -> 172.31.255.255
+declare -a list=(172.{16..31}.{0..255}.{0..255})
+# number of available IPs
+echo "${#list[@]}"
+> 1048576
+# 3 IPs at 1000th position
+echo "${list[@]:1000:3}"
+> 172.16.3.232 172.16.3.233 172.16.3.234
+
+# 10.0.0.0/8 (16,777,216 addresses)
+# 10.0.0.0 -> 10.255.255.255
+# big list: required 33 seconds to load on iMac (4GHz intel processor, 32GB Ram)
+declare -a list=(10.{0..255}.{0..255}.{0..255})
+# number of available IPs
+echo "${#list[@]}"
+> 16777216
+# 3 IPs at 1000th position
+# required 10 seconds to display
+echo "${list[@]:1000:3}"
+> 10.0.3.232 10.0.3.233 10.0.3.234
+
+# Other CIDR math
+declare NETWORK_ADDR=$(whatmask $SERVER_IP/$NETMASK | grep 'Network Address' | awk '{ print $5  }')
+declare CIDR=$(whatmask $SERVER_IP/$NETMASK | grep 'CIDR' | awk '{ print $4  }')

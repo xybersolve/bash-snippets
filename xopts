@@ -1,0 +1,127 @@
+#
+# ANALYSIS:
+#  - not possible to set global variables when calling get_opts
+#    using command substitution, to return result
+#  - not possible to set positional parameters in a function
+#    where \${@} refers to is own parameter array
+#
+# RESULT:
+#  - use get_opts when only setting global variables
+#  - use raw when arguments on tail are expected
+# ------------------------------------------------
+#
+# Use when expecting tail arguments, as well as options
+#
+declare -a in_args=("${@}")
+declare -a out_args=()
+declare -i i=0
+
+while (( i < ${#in_args[@]} )); do
+  declare arg="${in_args[$i]}"
+  case ${arg} in
+    -h|--help) show_help "${SYNTAX}" ;;
+    -m|--message)
+      (( i = i + 1 ))
+      MESSAGE="${in_args[$i]}"
+      echo "in_args[$i]: ${in_args[$i]}" >&2
+      echo "MESSAGE: ${MESSAGE}" >&2
+      ;;
+    *)
+      (( ${#out_args[@]} > 0 )) \
+          && out_args=("${out_args[@]}" "${arg}") \
+          || out_args=("${arg}")
+      ;;
+  esac
+  (( i++ ))
+done
+
+(( ${#out_args[@]} > 0 )) \
+  && set -- "${out_args[@]}"
+
+# ------------------------------------------------
+#
+# Use when only setting global variables
+#
+get_opts() {
+  local -a in_args=("${@}") out_args=()
+  local -i i=0
+
+  while (( i < ${#in_args[@]} )); do
+    local arg="${in_args[i]}"
+    case ${arg} in
+      -h|--help) get_help ;;
+      -l|--like)
+        (( $i++ ))
+        LIKE="${in_args[i]}"
+        ;;
+      -s|--show)
+        (( $i++ ))
+        SHOW="${in_args[i]}"
+        ;;
+      *) out_args+=("${arg}") ;;
+   esac
+   (( i++ ))
+  done
+
+  FILES=("${out_args[@]}")
+}
+
+# ------------------------------------------------
+#  Dead Simple Positional Parameter Parse
+# ------------------------------------------------
+#
+__get_opts() {
+  while (( $# > 0 )); do
+    local arg="${1}"; shift;
+    case ${arg} in
+      --help)      { usage; exit 0; }   ;;
+      --list)      LIST=${TRUE}         ;;
+      --less*)
+        LESS=${TRUE}
+        [[ ${arg} =~ '=' ]] \
+          || error "No script file was provided as argument" 2 \
+          && ITEM="${arg#*=}"
+        ;;
+      --show*)
+        SHOW=${TRUE}
+        [[ ${arg} =~ '=' ]] \
+          || error "No script file was provided as argument" 3 \
+          && ITEM="${arg#*=}"
+        ;;
+      --term*)
+        GOT_TERM=${TRUE}
+        [[ ${arg} =~ '=' ]] \
+          || error "No term was provided as argument" 4 \
+          && TERM="${arg#*=}"
+        ;;
+      *)  error "Unknown option: ${arg}" 1 ;;
+   esac
+  done
+  return 0
+}
+
+get_opts() {
+  while (( $# > 0 )); do
+    local arg="${1}"; shift;
+    case ${arg} in
+      --help)       { usage; exit 0; }   ;;
+      --log-value)  LOG_VALUE=${TRUE}    ;;
+      --log)        LOG_DATA=${TRUE}     ;;
+      --display)    DISPLAY_DATA=${TRUE} ;;
+      --inform)     INFORM=${TRUE}       ;;
+      --quotes*)
+        SPEAK_DATA=${TRUE}
+        [[ ${arg} =~ '=' ]] && VOICE="${arg#*=}"
+        ;;
+      --price) # one and done, get the rest
+        __get_price "${@}"
+        exit 0 ;;
+      --btc) # one and done, get the rest
+        __btc_value "${@}"
+        exit 0 ;;
+      --export)     EXPORT_DATA=${TRUE}  ;;
+      *)            die "Unknown option: ${arg}" ;;
+   esac
+  done
+  return 0
+}

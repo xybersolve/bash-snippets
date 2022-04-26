@@ -1,0 +1,119 @@
+#!/usr/bin/env bash
+# -*- mode: bash -*-
+# vi: set ft=sh
+# --------------------------------------
+# Description:
+#
+#
+# Usage:
+#   script [options]
+#
+# Options:
+#   See $SYNTAX (below)
+#
+# Author: Greg Milligan
+# Email: xybersolve@gmail.com
+# Copyright (c) 2018 XyberSolve, Corp
+#
+# TODO:
+# --------------------------------------
+
+# --------------------------------------
+# CONFIGFURATION
+# --------------------------------------
+# setup strict environment
+set -o errexit  # exit on command error status
+set -o nounset  # no unreadonlyd variables
+set -o pipefail # failr on pipe failures
+trap 'echo "Aborting due to errexit on line $LINENO. Exit code: ${?}" >&2' ERR
+
+# ---------------------------------------
+# GLOBAL VARIABLES
+# ---------------------------------------
+# booleans
+declare -ir TRUE=1
+declare -ir FALSE=0
+# script info
+
+declare -r PROGNAME="$(basename ${0})"
+declare -r VERSION=0.1.0
+declare -r SUBJECT=""
+declare -r KEYS=""
+declare -ri MIN_ARG_COUNT=1
+declare -r SYNTAX=$(cat <<EOF
+
+  Usage:
+    ${PROGNAME} arg1
+
+EOF
+)
+
+# ---------------------------------------
+# COMMON SHARED FUNCTIONS
+# ---------------------------------------
+usage() {
+  printf "\n%s\n" "${SYNTAX}"
+}
+
+error() {
+  printf "\n%s\n" "Error: ${1}"
+}
+
+die() {
+  error "${1}"
+  usage
+  printf "\n"
+  exit "${2:-1}"
+}
+
+show_version() {
+  printf "\n\n%s  %s\n\n\n" "${PROGNAME}" "${VERSION}"
+  exit 0
+}
+
+show_help() {
+  printf "\n\n"
+  usage
+  printf "\n\n"
+  exit 0
+}
+
+# --------------------------------------
+# MAIN ROUTINES
+# --------------------------------------
+
+__get_opts() {
+  while (( $# > 0 )); do
+    local arg="${1}"; shift;
+    case ${arg} in
+      --help)    show_help                ;;
+      --version) show_version             ;;
+      --ips)            GET_IPS=${TRUE}   ;;
+      --log-local)
+        __log_local_clients
+        exit 0
+        ;;
+      --quotes*) # --option=argument
+        SPEAK_DATA=${TRUE}
+        [[ ${arg} =~ '=' ]] && VOICE="${arg#*=}"
+        ;;
+      *) die "Unknown option: ${arg}" ;;
+   esac
+  done
+  return 0
+}
+
+__dispatch() {
+
+  return 0
+}
+
+main() {
+  (( ${#} < MIN_ARG_COUNT )) && die "Expects at least ${MIN_ARG_COUNT} arguments" 1
+  (( $# > 0 )) && __get_opts "$@"
+
+  __dispatch
+
+  return 0
+}
+(( ${#} > 0 )) && main "${@}" || main

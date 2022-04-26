@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+# ********************************
+# Script: ${PROGNAME}   
+# Usage:  ${PROGNAME} -h -v 
+# Author: Greg Milligan
+# Email: xybersolve@gmail.com
+# Copyright (c) 2017 XyberSolve, Corp
+#
+# ********************************
+PROGNAME="$(basename ${0})"
+VERSION=0.0.1
+SUBJECT=""
+
+function usage {
+  cat <<EOF
+    Script: $(basename ${0}) 
+
+    Purpose: 
+    Usage: $(basename ${0}) [-h|--help] [-v] [--verbose]
+    Options:
+      -h|--help:  help and usage
+      -v| --version: show version info
+
+EOF
+} 
+
+function error {
+  echo
+  echo Error: $1
+  usage
+  exit ${2:=1}
+}
+
+function help {
+  echo 
+  usage
+  echo
+  exit 0
+}
+
+[[ $# -lt 1 ]] && error "Incorrect number of arguments" 2
+
+function main {
+
+  while getopts ":vh --long help,version" opt; do
+    case "${opt}" in
+      h|help) help ;;
+      v|version)
+        printf "\n%s %s\n\n" "${PROGNAME}" "${VERSION}"
+        exit 0
+        ;;
+      :) error "Option ${OPTARG} requires an argument" 2 ;;
+      \?) error "Unknown option: ${OPTARG}" 2 ;; 
+    esac
+  done
+}
+
+main "${@}"
+

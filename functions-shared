@@ -1,0 +1,18 @@
+# Shared Function
+function error {
+  echo
+  echo Error: $1
+  echo
+  usage
+  exit ${2:=1}
+}
+
+function help {
+  echo 
+  usage
+  echo
+  exit 0
+}
+
+[[ $# -lt 1 ]] && error "Snippet name is required" 2
+

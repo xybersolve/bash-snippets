@@ -1,0 +1,7 @@
+function main {
+  local snippet=$1
+  readonly SNIPPET_PATH="${SNIPPET_DIR}/${snippet}"
+  cat $SNIPPET_PATH 
+}
+
+[[ $# -gt 0 ]] && main "${@}" || main

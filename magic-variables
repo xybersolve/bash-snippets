@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+# set magic variables
+declare __dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"  
+declare __file="${__dir}/$(basename "${BASH_SOURCE[0]}")"
+declare __base="$(basename ${__file} .sh)"
+declare __root="$(cd "$(dirname "${__dir}")" && pwd)"

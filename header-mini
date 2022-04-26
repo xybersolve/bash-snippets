@@ -1,0 +1,54 @@
+#!/usr/bin/env bash
+# -*- mode: bash -*-
+# vi: set ft=sh
+# Description:
+#
+# Usage:
+#   script arg arg -h -v
+#
+# ---------------------------------------
+# CONFIGFURATION
+# ---------------------------------------
+# strict environment
+set -o nounset
+set -o errexit
+set -o pipefail
+trap 'echo "Aborting due to errexit on line $LINENO. Exit code: ${?}" >&2' ERR
+# ---------------------------------------
+# GLOBAL VARIABLES
+# ---------------------------------------
+declare -r PROGNAME="$(basename ${0})"
+declare -ri MIN_ARG_COUNT=1
+declare -r SYNTAX=$(cat <<EOF
+
+  Usage:
+    ${PROGNAME} arg1 arg2
+
+
+EOF
+)
+
+# ---------------------------------------
+# COMMON SHARED FUNCTIONS
+# ---------------------------------------
+usage() {
+  printf "\n%s\n" "${SYNTAX}" >&2
+}
+
+error() {
+  printf "\nError: %s\n\n" "${1}" >&2
+  usage
+  printf "\n" >&2
+  exit "${2:-1}"
+}
+
+# ---------------------------------------
+# MAIN ROUTINES
+# ---------------------------------------
+main() {
+  (( ${#} < MIN_ARG_COUNT )) && error "Expects at least ${MIN_ARG_COUNT} arguments" 1
+  
+
+
+}
+(( ${#} > 0 )) && main "${@}" || main

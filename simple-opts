@@ -1,0 +1,21 @@
+while (( ${#} > 0 )); do
+  arg="${1}"; shift
+  case "${arg}" in
+    --help   ) usage ;;
+    --pre    ) : ;; # already assigned default
+    --post   ) location="${1##-}" ;; # strip dash
+    --add    )
+      [[ -z "${1}" ]] && die "${FUNCNAME}" "${dir_missing}" 1
+      add "${1}" "${location}"
+      shift
+      ;;
+    --remove )
+      [[ -z "${1}" ]] && die "${FUNCNAME}" "${dir_missing}" 1
+      remove "${1}"
+      shift
+      ;;
+    --clean  ) clean ;;
+    --list   ) list ;;
+    *        ) die "${FUNCNAME}" "Unknown option or argument: ${arg}" 8 ;;
+  esac
+done

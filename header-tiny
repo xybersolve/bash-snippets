@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# -*- mode: bash -*-
+# vi: set ft=sh
+# Description:
+#
+# Usage:
+#   script arg arg -h -v
+#
+# ---------------------------------------
+# CONFIGFURATION
+# ---------------------------------------
+# strict environment
+set -o nounset
+set -o errexit
+set -o pipefail
+trap 'echo "Error: line ${LINENO}, exit code: ${?}" >&2' ERR
+# ---------------------------------------
+# GLOBAL VARIABLES
+# ---------------------------------------
+declare -r PROGNAME="$(basename ${0})"
+# ---------------------------------------
+# COMMON SHARED FUNCTIONS
+# ---------------------------------------
+error() {
+  printf "\nError: %s\n\n" "${1}" >&2
+  exit "${2:-1}"
+}
+
+# ---------------------------------------
+# MAIN CODE
+# ---------------------------------------
+main() {
+  #(( ${#} < 2 )) && error "err message here" 1
+  
+}
+(( ${#} > 0 )) && main "${@}" || main

@@ -1,0 +1,16 @@
+while getopts "vha: --long help,version" opt; do
+  case "${opt}" in
+    h|help) help ;;
+    v|version)
+      printf "\n%s %s\n\n" "${PROGNAME}" "${VERSION}"
+      exit 0
+      ;;
+    a)
+      var1="${OPTARG}"
+      echo "${var1}"
+      ;;
+    :) error "Option ${OPTARG} requires an argument" 2 ;;
+    \?) error "Unknown option: ${OPTARG}" 2 ;; 
+  esac
+done
+

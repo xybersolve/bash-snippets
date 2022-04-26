@@ -1,0 +1,10 @@
+
+# all functions in the shell environment
+declare | grep ^[a-z].*\(\).*$
+
+# testing for existence of executable
+# get path of executable
+ls=$(command -v ls)
+# ouput
+$ command -v ls
+/bin/ls

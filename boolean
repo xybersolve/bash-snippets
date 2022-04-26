@@ -1,0 +1,10 @@
+# BASH BOOLEANS
+# (( 1 )) evaluates to true, or && command
+# (( 0 )) evaluates to false, or || command
+# Example:
+#   declare -i DEGBUG=$TRUE
+#   (( DEBUG )) && op || no-op
+
+# booleans
+declare -ir TRUE=1
+declare -ir FALSE=0
